@@ -1,23 +1,32 @@
-// Your First Program
 
 public abstract class File {
-    String name;
-    String path;
-    int size;
+    protected String name;
+    protected String path;
+    protected int size;
 
-    File(String name, String path, int size) {
+    File(String name, String path) {
         this.name = name;
         this.path = path;
-        this.size = size;
     }
 
 
-    public void printMe() {
-        System.out.println(this.name + "length: " + this.size);
+    public abstract void printMe();
+
+    public abstract void printMe(String indent);
+
+    public String get_name() {
+        return this.name;
     }
+
+    public String get_path() {
+        return this.path;
+    }
+
+    public void set_path(String path) {
+        this.path = path;
+    }
+
+    protected abstract int update_size();
+
+
 }
-
-// class Drive extends File {
-    
-// }
-
