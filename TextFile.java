@@ -1,3 +1,9 @@
+/*
+ * Text file class
+ *  properties:
+ *      * can hold content in the form of a string
+ *      * cannot hold other files
+ */
 public class TextFile extends File{
     String content = "";
 
@@ -10,20 +16,15 @@ public class TextFile extends File{
         this.content = content;
     }
 
-
     @Override
     public void printMe() {
-        
-        
     }
 
 
     @Override
     public void printMe(String indent) {
-        System.out.println(indent + name + ": size" + size);
-        
+        System.out.println(indent + name + ": size" + size + this.content);
     }
-
 
     @Override
     protected int update_size() {

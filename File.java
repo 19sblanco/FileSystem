@@ -1,4 +1,6 @@
-
+/*
+ * File class: the class that all other files inherit from (drives, folders, textfiles, zipfiles)
+ */
 public abstract class File {
     protected String name;
     protected String path;
@@ -8,7 +10,6 @@ public abstract class File {
         this.name = name;
         this.path = path;
     }
-
 
     public abstract void printMe();
 
@@ -27,6 +28,4 @@ public abstract class File {
     }
 
     protected abstract int update_size();
-
-
 }

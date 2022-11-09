@@ -1,3 +1,9 @@
+/*
+ * Zip file class
+ *  properties:
+ *      * contains all other types of folders, except drives
+ *      * has a size, that is half the size of the contents that it holds
+ */
 public class ZipFile extends ContainsFile{
     public ZipFile(String name, String path) {
         super(name, path);
@@ -5,8 +11,6 @@ public class ZipFile extends ContainsFile{
 
     @Override
     public void printMe() {
-        // TODO Auto-generated method stub
-        
     }
 
     @Override
@@ -17,7 +21,6 @@ public class ZipFile extends ContainsFile{
         for (File f: super.files) {
             f.printMe(indent);
         }
-        
     }
 
     @Override

@@ -1,3 +1,9 @@
+/*
+ * Folder class
+ *  properties:
+ *      * can hold all types of files except drive files
+ *      * reports its size as the size of all its children combined
+ */
 public class Folder extends ContainsFile{
 
     public Folder(String name, String path) {
@@ -12,13 +18,10 @@ public class Folder extends ContainsFile{
         for (File f: super.files) {
             f.printMe(indent);
         }
-        
     }
 
     @Override
     public void printMe() {
-        // TODO Auto-generated method stub
-        
     }
 
     @Override
@@ -32,6 +35,4 @@ public class Folder extends ContainsFile{
         super.size = size;
         return size;
     }
-
-    
 }

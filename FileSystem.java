@@ -1,235 +1,266 @@
 import java.util.ArrayList;
 import java.util.Scanner;
 
+
 public class FileSystem {
-    ArrayList<File> files = new ArrayList<>();
-    Scanner scanner = new Scanner(System.in);
+    private ArrayList<File> files = new ArrayList<>();
+    private Scanner scanner = new Scanner(System.in);
+
+    private String mainMenu = "Enter C to create a file\n" +
+                        "Enter D to delete a file\n" +
+                        "Enter M to move a file\n" + 
+                        "Enter W to write to a text file\n" +
+                        "Enter X to exit\n";
+
+    private String createMenu = "[type] [name] [path of parent]\n" +
+    "types: d for drive | f for folder | t for text file | z for zip file\n" +
+    "you must exclude path of parent for drive, but must include it for everything else\n" +
+    "Ex: d drive1       Ex: t textfile1 drive1\n";
 
 
-
-    public FileSystem() {
-
-    }
-
+    /*
+     * display tree structure and main menu
+     * then prompts user to create, delete, move, or write to a text file, or just to exit the program
+     * gathers user input into an array and pass that onto the appropriate function to create, delete, move or write
+     * after finishing it will loop again and repeat
+     */
     public void run () {
         while (true) {
-            display();
-            getInput();
-        }
-    }
-
-    /*
-     * print the files in Files as a tree structure
-    */
-    public void display() {
-        System.out.println("Enter C to create a file");
-        System.out.println("Enter D to delete a file");
-        System.out.println("Enter M to move a file");
-        System.out.println("Enter W to write to a text file");
-        System.out.println("Enter X to exit");
-
-        for (File f: files) {
-            f.update_size();
-            f.printMe();
-        }
-    }
-
-    public void getInput() {
-        while (true) {
-            String option = this.scanner.nextLine();
-            option = option.toLowerCase();
-
-            if (option.equals("c")) {
-                create();
-                break;
+            System.out.println("\n");
+            for (File f: files) {
+                f.update_size();
+                f.printMe();
             }
-            else if (option.equals("d")) {
-                delete();
-                break;
+            String menuOption = getInput(this.mainMenu, 1)[0];
+
+            if (menuOption.equals("c")) {
+                String[] input = getInput(this.createMenu, 3);
+                create(input);
             }
-            else if (option.equals("m")) {
-                move();
-                break;
+            else if (menuOption.equals("d")) {
+                String[] input = getInput("[path]", 1);
+                delete(input);
             }
-            else if (option.equals("w")) {
-                write();
+            else if (menuOption.equals("m")) {
+                String[] input = getInput("[sourcePath] [destinationPath]", 2);
+                move(input);
+            }
+            else if (menuOption.equals("w")) {
+                String[] input = getInput("[path] [new content]", 2);
+                write(input);
+            }
+            else if (menuOption.equals("x")) {
                 break;
             }
             else {
-                System.out.println("invalid option, try again");
+                System.out.println("<invalid input try again>");
             }
         }
+        System.out.println("Program terminated");
     }
 
-    /*
-     * create a file based on user input
-     * does error checking to make sure that user input is valid
-     * if user input is invalid it will print an error message and not create the file
+     /*
+     * A general function for getting input by
+     * displaying a prompt
+     * ask for input till we get the number of items requested by inputSize
+     * normalize input(lowercase) then return
      */
-    public void create() {
-        System.out.println();
-        System.out.println("[type] [name] [pathOfParent]");
-        System.out.println("d for drive | f for folder | t for text file | z for zip file");
-        System.out.println("Ex: d drive1");
-        System.out.println("Ex: t helloWorld.txt drive1");
-        System.out.println();
+    private String[] getInput(String prompt, int limit) {
+        System.out.println(prompt);
+        String[] optionsArray;
 
-        while (true) {
-            String fileToCreate = this.scanner.nextLine();
-            String[] fileToCreateArray = fileToCreate.split(" ", 3);
-            
-            String fileType = fileToCreateArray[0].toLowerCase();
-            String fileName = null;
-            String pathOfParent = null;
+        String options = this.scanner.nextLine();
+        options = options.toLowerCase();
+        optionsArray = options.split(" ", limit);
 
-            if (fileToCreateArray.length > 1) {
-                fileName = fileToCreateArray[1];
-            }
-            if (fileToCreateArray.length == 3) {
-                pathOfParent = fileToCreateArray[2].toLowerCase();
-            }
+        return optionsArray;
+    }
 
+    /*
+     * create a file based on user input [type] [name] [path of parent]
+     * checks for the correct number of arguments (2 or 3) and assigns variables based on that
+     * drives will have 2 arguments, all other files will have 3
+     */
+    public void create(String[] args) {
+        String type = null;
+        String name = null;
+        String pathOfParent = null;
 
-            if (fileType.equals("d") && fileToCreateArray.length == 2) {
-                Drive drive = new Drive(fileName);
-                this.files.add(drive);
-                break;
+        // map the input correctly the the variables
+        if (args.length < 2 || args.length > 3) {
+            System.out.println("invalid arguments");
+            return;
+        }
+        if (args.length >= 2) {
+            type = args[0];
+            name = args[1];
+        }
+        if (args.length == 3) { // drives will have an input of size 2 because they don't have parents
+            pathOfParent = args[2];
+        }
+
+        // add drive
+        if (type.equals("d")) {
+            Drive drive = new Drive(name);
+            this.files.add(drive);
+            return;
+        }
+        try {
+            // check for valid parent for folders, textfiles and zipfiles
+            ContainsFile parent = (ContainsFile) getFileFromPath(pathOfParent);
+
+            // add file
+            if (type.equals("f")) {
+                Folder f = new Folder(name, pathOfParent);
+                parent.add(f);
             }
-            else if (fileType.equals("f") && pathOfParent != null) {
-                Folder folder = new Folder(fileName, pathOfParent);
-                ContainsFile parent = (ContainsFile) getFileFromPath(pathOfParent);
-                if (parent != null) {
-                    parent.add(folder);
-                }
-                else {
-                    System.out.println("Error adding file");
-                }
-                break;
+            else if (type.equals("z")) {
+                ZipFile z = new ZipFile(name, pathOfParent);
+                parent.add(z);
             }
-            else if (fileType.equals("z") && pathOfParent != null) {
-                ZipFile zipFile = new ZipFile(fileName, pathOfParent);
-                ContainsFile parent = (ContainsFile) getFileFromPath(pathOfParent);
-                if (parent != null) {
-                    parent.add(zipFile);
-                }
-                else {
-                    System.out.println("Error adding file");
-                }
-                break;
+            else if (type.equals("t")) {
+                TextFile t = new TextFile(name, pathOfParent);
+                parent.add(t);
             }
-            else if (fileType.equals("t") && pathOfParent != null) {
-                TextFile textFile = new TextFile(fileName, pathOfParent);
-                ContainsFile parent = (ContainsFile) getFileFromPath(pathOfParent);
-                if (parent != null) {
-                    parent.add(textFile);
-                }
-                else {
-                    System.out.println("Error adding file");
-                }
-                break;
-            }
-            else{
+            else {
                 System.out.println("invalid input");
             }
         }
+        catch (java.lang.ClassCastException e) {
+            System.out.println("text files cannot hold other files");
+        }
+        catch (Exception e) {
+            System.out.println("invalid arguments");
+        }
     }
 
-    public void delete() {
-        System.out.println("[path]");
-        while (true) {
-            String fileToDeleteName = this.scanner.nextLine();
-            String[] fileToDeleteArray = fileToDeleteName.split("\\u005c");
+    /*
+     * delete a file given a path
+     * if its a drive, delete it directly from the files array list
+     * otherwise find the parent and remove the file from the parent
+     * 
+     * This method deletes a file with all its children
+     */
+    public void delete(String[] args) {
+        String path = null;
 
-            if (fileToDeleteArray.length == 1) {
-                File fileToDelete = getFileFromPath(fileToDeleteName);
-                if (this.files.contains(fileToDelete)) {
-                    this.files.remove(fileToDelete);
-                }
-                break;
+        if (args.length != 1) {
+            System.out.println("invalid arguments");
+            return;
+        }
+
+        try {
+            path = args[0];
+            File fileToDelete = getFileFromPath(path);
+    
+            if (fileToDelete instanceof Drive) {
+                this.files.remove(fileToDelete);
             }
-            else if (fileToDeleteArray.length > 1) {
-                String parentPath = "";
-                for (int i = 0; i < fileToDeleteArray.length - 1; i++) { // -2 becuase we want the parent of the file to delete
-                    parentPath += fileToDeleteArray[i];
-                }
-
+            else {
+                String parentPath = getParentPath(path);
                 ContainsFile parentFile = (ContainsFile) getFileFromPath(parentPath);
-                File fileToDelete = getFileFromPath(fileToDeleteName);
-
                 parentFile.remove(fileToDelete);
-                break;
             }
-            else {
-                System.out.println("invalid input");
-            }
+        }
+        catch (Exception e) {
+            System.out.println("invalid arguments");
         }
     }
 
-    public void move() {
-        System.out.println("[source path] [destination path]");
-        while (true) {
-            String fileToMove = this.scanner.nextLine();
-            String[] fileToMoveArray = fileToMove.split(" ", 2);
+    /*
+     * given [path] [content] as an array
+     * if path is a text file, write content to that text file
+     */
+    public void write(String[] args) {
+        String path = null;
+        String content = null;
 
-            String sourcePath = fileToMoveArray[0].toLowerCase();
-            String destinationPath = null;
+        if (args.length != 2) {
+            System.out.println("invalid arguments");
+            return;
+        }
+        
+        try {
+            path = args[0];
+            content = args[1];
 
-            if (fileToMoveArray.length > 1) {
-                destinationPath = fileToMoveArray[1];
-            }
-            else {
-                System.out.println("invalid input");
-                continue;
-            }
+            TextFile textFile = (TextFile) getFileFromPath(path);
+            textFile.change_content(content);
+        }
+        catch (java.lang.ClassCastException e) {
+            System.out.println("only text files can be written to");
+        }
+        catch(Exception e) {
+            System.out.println("invalid arguments");
+        }
+    }
 
-            /*
-             * delete file from source
-             * add to child of destination path
-             */
+    /*
+     * move a file from a source path to a destination path
+     * function will terminate if the source path or the destination path are invalid
+     */
+    public void move(String[] args) {
+        String sourcePath = null;
+        String destinationPath = null;
+
+        if (args.length != 2) {
+            System.out.println("invalid arguments");
+            return;
+        }
+        
+        try {
+            sourcePath = args[0];
+            destinationPath = args[1];
+
             File sourceFile = getFileFromPath(sourcePath);
 
+            if (sourceFile instanceof Drive) {
+                return; // drives always sit in the first layer of the file system and cannot be moved
+            }
+            ContainsFile destinationFile = (ContainsFile) getFileFromPath(destinationPath);
+            destinationFile.add(sourceFile);
 
-
+            // delete source file, delete takes a string[] so first add the sourcePath to a 1 sized string[]
+            String[] sourcePathAsArray = {sourcePath};
+            delete(sourcePathAsArray);
         }
-
-    }
-
-    public void write() {
-        System.out.println("[path] [new content]");
-        while (true) {
-            String fileToWriteTo = this.scanner.nextLine();
-            String[] fileToWriteToArray = fileToWriteTo.split(" ", 2);
-
-            String textFilePath = fileToWriteToArray[0].toLowerCase();
-            String content = null;
-
-            if (fileToWriteToArray.length > 1) {
-                content = fileToWriteToArray[1];
-            }
-
-            TextFile textFile = (TextFile) getFileFromPath(textFilePath);
-            if (textFile == null) {
-                System.out.println("invalid path");
-            }
-            else {
-                textFile.change_content(content);
-                break;
-            }
+        catch (java.lang.ClassCastException e) {
+            System.out.println("Must move to a file that can contain other files");
+        }
+        catch (Exception e) {
+            System.out.println("invalid paths");
         }
     }
-
-    private void get_input() {
-        
-    }
-
 
     /*
-     * given a file path as a string, This method returns
-     * the file from that path
+     * split a path by the \ character
      */
-    public File getFileFromPath(String path) {
+    private String[] getPathAsArray(String path) {
+        return path.split("\\u005c");
+    }
+
+    /*
+     * given the path of a child node, return the path of its parent
+     */
+    private String getParentPath(String childPath) {
+        String[] pathAsArray = getPathAsArray(childPath);
+        String parentPath = "";
+
+        for (int i = 0; i < pathAsArray.length - 1; i++) {
+            parentPath += pathAsArray[i];
+            parentPath += "\\";
+        }
+
+        return parentPath;
+    }
+
+    /*
+     * given a file path as a string, This method returns the file from that path
+     * this method will return null if there was an error in retrieving that file
+     */
+    private File getFileFromPath(String path) throws Exception {
         // u005c is unicode for a backslash
-        String[] pathAsArray = path.split("\\u005c");
+        String[] pathAsArray = getPathAsArray(path);
 
         ArrayList<File> currentDirectory = this.files;
         File currentFile = null;
@@ -246,37 +277,9 @@ public class FileSystem {
                 }
             }
         }
-        if (currentFile != null && !currentFile.get_name().equals(pathAsArray[pathAsArray.length - 1])) {
-            currentFile = null; // file found != to the file user was trying to find
+        if (currentFile == null || currentFile != null && !currentFile.get_name().equals(pathAsArray[pathAsArray.length - 1])) {
+            throw new Exception(); // didn't find the right file
         }
         return currentFile;
     }
 }
-
-/*
- * 
- * todo: make a function for getting input
- *      get user input
- *      split into array and return
- * 
- *      pass array into move, delete, create, etc as parameters
- * 
- * todo: make sure that you are doing good object oriented programming
- *      * look at duplicate code
- *      * look at the overall structrue of the code (maybe write on paper)
- * 
- * 
- * todo: make sure that you can't make fiels of the same name
- * 
- * 
- */
-
-
- /**
-  * At the end
-        Make sure that the correct files are made public / private
-        make sure that when you try to create files you cant create in text files
-        make sure that the path is valid and that you aren't tryin gto grab files in text files
-        look up how to structure java files, abstract java files and hierachy things
-
-  */
