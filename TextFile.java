@@ -23,7 +23,7 @@ public class TextFile extends File{
 
     @Override
     public void printMe(String indent) {
-        System.out.println(indent + name + ": size" + size + this.content);
+        System.out.println(indent + name + ": size" + size + " " + this.content);
     }
 
     @Override

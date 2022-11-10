@@ -29,7 +29,10 @@ public class FileSystem {
             System.out.println("\n");
             for (File f: files) {
                 f.update_size();
+                System.out.println("==Tree==");
                 f.printMe();
+                System.out.println("====");
+
             }
             String menuOption = getInput(this.mainMenu, 1)[0];
 
@@ -101,25 +104,34 @@ public class FileSystem {
 
         // add drive
         if (type.equals("d")) {
-            Drive drive = new Drive(name);
+            Drive drive = new Drive(name, name);
             this.files.add(drive);
             return;
         }
         try {
             // check for valid parent for folders, textfiles and zipfiles
             ContainsFile parent = (ContainsFile) getFileFromPath(pathOfParent);
+            String path = pathOfParent + "\\" + name;
+
+            // check for duplicate names
+            for (File f: parent.getChildren()) {
+                if (name.equals(f.get_name())) {
+                    System.out.println("cannot have duplicate names");
+                    return;
+                }
+            }
 
             // add file
             if (type.equals("f")) {
-                Folder f = new Folder(name, pathOfParent);
+                Folder f = new Folder(name, path);
                 parent.add(f);
             }
             else if (type.equals("z")) {
-                ZipFile z = new ZipFile(name, pathOfParent);
+                ZipFile z = new ZipFile(name, path);
                 parent.add(z);
             }
             else if (type.equals("t")) {
-                TextFile t = new TextFile(name, pathOfParent);
+                TextFile t = new TextFile(name, path);
                 parent.add(t);
             }
             else {
@@ -207,22 +219,50 @@ public class FileSystem {
             System.out.println("invalid arguments");
             return;
         }
-        
+       
         try {
             sourcePath = args[0];
             destinationPath = args[1];
 
             File sourceFile = getFileFromPath(sourcePath);
+            ContainsFile destinationFile = (ContainsFile) getFileFromPath(destinationPath);
 
+            // error checking
             if (sourceFile instanceof Drive) {
                 return; // drives always sit in the first layer of the file system and cannot be moved
             }
-            ContainsFile destinationFile = (ContainsFile) getFileFromPath(destinationPath);
-            destinationFile.add(sourceFile);
+            else if (sourcePath.equals(destinationPath)) {
+                System.out.println("file cannot contain itself");
+                return;
+            }
+            // check the source file doesn't contain the destination file
+            else if (sourceFile instanceof ContainsFile) {
+                ArrayList<File> sourceAllChildren = new ArrayList<>();
+                ((ContainsFile)sourceFile).getAllChildren(sourceAllChildren);
+                if (sourceAllChildren.contains(destinationFile)) {
+                    System.out.println("source cannot contain destination");
+                    return;
+                }
+            }
 
-            // delete source file, delete takes a string[] so first add the sourcePath to a 1 sized string[]
-            String[] sourcePathAsArray = {sourcePath};
-            delete(sourcePathAsArray);
+            // delete file from old location
+            String oldParentPath = getParentPath(sourcePath);
+            ContainsFile oldParent = (ContainsFile) getFileFromPath(oldParentPath);
+            oldParent.remove(sourceFile);
+
+            // override files with the same name
+            ArrayList<File> copy = new ArrayList<>(destinationFile.getChildren());
+            for (File f: copy) {
+                if (f.get_name().equals(sourceFile.get_name())) {
+                    System.out.println("overrode file");
+                    destinationFile.remove(f);
+                }
+            }
+
+            // add to new location
+            destinationFile.add(sourceFile);
+            String newPath = destinationPath + "\\" + sourceFile.get_name();
+            sourceFile.set_path(newPath);
         }
         catch (java.lang.ClassCastException e) {
             System.out.println("Must move to a file that can contain other files");
@@ -248,7 +288,9 @@ public class FileSystem {
 
         for (int i = 0; i < pathAsArray.length - 1; i++) {
             parentPath += pathAsArray[i];
-            parentPath += "\\";
+            if (i != pathAsArray.length - 2) { // don't add '\' on last iteration
+                parentPath += "\\";
+            }
         }
 
         return parentPath;
@@ -259,6 +301,7 @@ public class FileSystem {
      * this method will return null if there was an error in retrieving that file
      */
     private File getFileFromPath(String path) throws Exception {
+        path = path.replaceAll("\\+$", ""); // trim ending \ characters
         // u005c is unicode for a backslash
         String[] pathAsArray = getPathAsArray(path);
 
@@ -271,13 +314,13 @@ public class FileSystem {
                 if (f.get_name().equals(currentFileName)) {
                     currentFile = f;
                     if (f instanceof ContainsFile) {
-                        currentDirectory = ((ContainsFile) f).get_children();
+                        currentDirectory = ((ContainsFile) f).getChildren();
                     }
                     continue;
                 }
             }
         }
-        if (currentFile == null || currentFile != null && !currentFile.get_name().equals(pathAsArray[pathAsArray.length - 1])) {
+        if (currentFile == null || currentFile != null && !currentFile.get_path().equals(path)) {
             throw new Exception(); // didn't find the right file
         }
         return currentFile;

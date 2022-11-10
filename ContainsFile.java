@@ -10,8 +10,25 @@ public abstract class ContainsFile extends File {
         super(name, path);
     }
 
-    public ArrayList<File> get_children() {
+    public ArrayList<File> getChildren() {
         return this.files;
+    }
+
+    public ArrayList<File> getAllChildren(ArrayList<File> allChildren) {
+        allChildren.addAll(this.files);
+
+        for (File f: this.files) {
+            if (f instanceof ContainsFile) {
+                ContainsFile fAsContainsFile = ContainsFile.class.cast(f);
+                ArrayList<File> fChildren = fAsContainsFile.getAllChildren(allChildren);
+                for (File child: fChildren) {
+                    if (!allChildren.contains(child)) {
+                        allChildren.add(child);
+                    }
+                }
+            }
+        }
+        return allChildren;
     }
 
     public void add(File file) {

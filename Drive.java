@@ -6,8 +6,8 @@
  */
 public class Drive extends ContainsFile {
 
-    public Drive(String name) {
-        super(name, "");
+    public Drive(String name, String path) {
+        super(name, path);
     }
 
     @Override
