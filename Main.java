@@ -1,6 +1,3 @@
-
-
-
 /*
  * Author: Steven Blanco
  * This program is demo for a file system that contains 

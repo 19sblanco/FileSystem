@@ -1,8 +1,13 @@
-
+/*
+ * Drive class
+ *  properties:
+ *      * never contained within another file
+ *      * reports its size as the size of all its children combined
+ */
 public class Drive extends ContainsFile {
 
-    public Drive(String name) {
-        super(name, "");
+    public Drive(String name, String path) {
+        super(name, path);
     }
 
     @Override
@@ -13,13 +18,10 @@ public class Drive extends ContainsFile {
         for (File f: super.files) {
             f.printMe(indent);
         }
-        
     }
 
     @Override
     public void printMe(String indent) {
-        // TODO Auto-generated method stub
-        
     }
 
     @Override
@@ -33,5 +35,4 @@ public class Drive extends ContainsFile {
         super.size = size;
         return size;
     }
-    
 }
