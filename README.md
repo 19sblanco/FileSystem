@@ -1,5 +1,5 @@
 # FileSystem
-This project was given to me as a project from a cybersecurity company. In the interview following turning in this project, I was told that this project contained some of the best code from a student that he had seen in 2 decades.
+This project was given to me as a project from a cybersecurity company. In the interview following turning in this project, I was told by the interviewer who worded as a software engineer that this project contained some of the best code from a student that he had seen in 2 decades.
 
 This is a mock file system with a root drive, directories, files, and zip files. I invite you to pull "FileSystem" and test this text-based application in your command line!
 
